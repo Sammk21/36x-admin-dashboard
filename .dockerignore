@@ -1,0 +1,62 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Build outputs
+dist
+build
+.next
+.medusa/server
+
+# Development files
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+razorpay docs
+
+# Test files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+integration-tests
+coverage
+.nyc_output
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
+.cache
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Other
+yalc.lock
+.yalc

@@ -1,0 +1,78 @@
+version: '1.0'
+
+# Dokploy configuration for Medusa Dashboard
+project:
+  name: 36x-dashboard
+  description: Medusa v2 E-commerce Backend with Razorpay Integration
+
+# Application configuration
+application:
+  type: docker
+  name: medusa-backend
+
+  # Build configuration
+  build:
+    dockerfile: Dockerfile
+    context: .
+
+  # Port mapping
+  ports:
+    - port: 9000
+      protocol: tcp
+      published: 9000
+
+  # Environment variables (these should be configured in Dokploy UI)
+  env:
+    - NODE_ENV=production
+    - DATABASE_URL=${DATABASE_URL}
+    - REDIS_URL=${REDIS_URL}
+    - JWT_SECRET=${JWT_SECRET}
+    - COOKIE_SECRET=${COOKIE_SECRET}
+    - STORE_CORS=${STORE_CORS}
+    - ADMIN_CORS=${ADMIN_CORS}
+    - AUTH_CORS=${AUTH_CORS}
+    - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+    - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+    - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+
+  # Health check
+  healthcheck:
+    enabled: true
+    path: /health
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+  # Resource limits
+  resources:
+    memory: 1024M
+    cpu: 1
+
+  # Restart policy
+  restart: unless-stopped
+
+# External services (PostgreSQL and Redis)
+# Note: These should be configured separately in Dokploy
+services:
+  - name: postgres
+    image: postgres:16-alpine
+    env:
+      - POSTGRES_USER=medusa
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=medusa-v2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  - name: redis
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+
+volumes:
+  - postgres_data
+  - redis_data
