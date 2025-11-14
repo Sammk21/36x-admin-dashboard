@@ -1,10 +1,7 @@
 # Multi-stage Dockerfile for Medusa v2
 
 # Stage 1: Build stage
-FROM node:20-alpine3.20 AS builder
-
-# Update and upgrade packages to patch vulnerabilities
-RUN apk update && apk upgrade --no-cache
+FROM node:20-alpine AS builder
 
 # Install necessary build tools
 RUN apk add --no-cache libc6-compat python3 make g++
@@ -26,19 +23,16 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production stage
-FROM node:20-alpine3.20 AS runner
-
-# Update and upgrade packages to patch vulnerabilities
-RUN apk update && apk upgrade --no-cache
+FROM node:20-slim AS runner
 
 # Install dumb-init to handle signals properly
-RUN apk add --no-cache dumb-init
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Create a non-root user
-RUN addgroup --system --gid 1001 medusa && \
-    adduser --system --uid 1001 medusa
+RUN groupadd -g 1001 medusa && \
+    useradd -u 1001 -r -g medusa -s /usr/sbin/nologin medusa
 
 # Copy package files
 COPY package*.json ./
