@@ -1,10 +1,13 @@
 # Multi-stage Dockerfile for Medusa v2
 
 # Stage 1: Build stage
-FROM node:20-alpine AS builder
+# Using Node 22 LTS (latest) for better security patches
+FROM node:22-alpine AS builder
 
-# Install necessary build tools
-RUN apk add --no-cache libc6-compat python3 make g++
+# Update packages and install necessary build tools
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache libc6-compat python3 make g++
 
 WORKDIR /app
 
@@ -23,10 +26,14 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production stage
-FROM node:20-slim AS runner
+# Using Node 22 LTS (latest) for better security patches
+FROM node:22-slim AS runner
 
-# Install dumb-init to handle signals properly
-RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
+# Install security updates and dumb-init
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends dumb-init && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -43,9 +50,8 @@ RUN npm ci --only=production && \
     npm cache clean --force
 
 # Copy built application from builder
-COPY --from=builder --chown=medusa:medusa /app/dist ./dist
-COPY --from=builder --chown=medusa:medusa /app/medusa-config.ts ./
 COPY --from=builder --chown=medusa:medusa /app/.medusa ./.medusa
+COPY --from=builder --chown=medusa:medusa /app/medusa-config.ts ./
 
 # Copy necessary files
 COPY --chown=medusa:medusa instrumentation.ts ./
