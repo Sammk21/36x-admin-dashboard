@@ -23,15 +23,15 @@
     "predeploy": "medusa db:migrate"
   },
   "dependencies": {
-    "@medusajs/admin-sdk": "2.11.2",
-    "@medusajs/cli": "2.11.2",
-    "@medusajs/framework": "2.11.2",
-    "@medusajs/medusa": "2.11.2",
+    "@medusajs/admin-sdk": "^2.11.3",
+    "@medusajs/cli": "^2.11.3",
+    "@medusajs/framework": "^2.11.3",
+    "@medusajs/medusa": "^2.11.3",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {
-    "@medusajs/test-utils": "2.11.2",
-    "@swc/core": "1.5.7",
+    "@medusajs/test-utils": "^2.11.3",
+    "@swc/core": "^1.15.2",
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",
     "@types/node": "^20.0.0",
