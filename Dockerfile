@@ -1,78 +1,102 @@
 # Multi-stage Dockerfile for Medusa v2
+# Optimized for production deployment on Dokploy
 
-# Stage 1: Build stage
-# Using Node 22 LTS (latest) for better security patches
-FROM node:22-alpine AS builder
-
-# Update packages and install necessary build tools
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache libc6-compat python3 make g++
+# ============================================
+# Stage 1: Dependencies
+# ============================================
+FROM node:22-bookworm-slim AS deps
 
 WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
-COPY yarn.lock ./
-COPY .yarnrc.yml ./
+COPY yarn.lock* ./
 
-# Install dependencies (including devDependencies for build)
+# Install ALL dependencies (including dev) with legacy peer deps
 RUN npm ci --legacy-peer-deps
 
-# Workaround for rollup optional dependency issue on Alpine
-# See: https://github.com/npm/cli/issues/4828
-RUN npm install --force @rollup/rollup-linux-x64-musl || true
-
-# Copy source files
-COPY . .
-
-# Build the application (generates .medusa directory)
-RUN npx medusa build
-
-# Stage 2: Production stage
-# Using Node 22 LTS (latest) for better security patches
-FROM node:22-slim AS runner
-
-# Install security updates and dumb-init
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends dumb-init && \
-    rm -rf /var/lib/apt/lists/*
+# ============================================
+# Stage 2: Builder
+# ============================================
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Create a non-root user
+# Install runtime dependencies needed for build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy application source
+COPY . .
+
+# Build the Medusa application
+# This generates the .medusa directory with compiled backend and admin
+RUN npx medusa build
+
+# ============================================
+# Stage 3: Production Runner
+# ============================================
+FROM node:22-bookworm-slim AS runner
+
+WORKDIR /app
+
+# Install production runtime dependencies
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    dumb-init \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
 RUN groupadd -g 1001 medusa && \
     useradd -u 1001 -r -g medusa -s /usr/sbin/nologin medusa
 
 # Copy package files
-COPY package*.json ./
-COPY yarn.lock ./
+COPY --chown=medusa:medusa package*.json ./
 
-# Install production dependencies only
+# Install ONLY production dependencies
 RUN npm ci --omit=dev --legacy-peer-deps && \
     npm cache clean --force
 
-# Copy built application from builder
+# Copy built application from builder stage
 COPY --from=builder --chown=medusa:medusa /app/.medusa ./.medusa
-COPY --from=builder --chown=medusa:medusa /app/medusa-config.ts ./
+COPY --from=builder --chown=medusa:medusa /app/medusa-config.ts ./medusa-config.ts
 
-# Copy necessary files
-COPY --chown=medusa:medusa instrumentation.ts ./
-COPY --chown=medusa:medusa tsconfig.json ./
+# Copy source files (needed for modules and runtime)
 COPY --chown=medusa:medusa src ./src
+COPY --chown=medusa:medusa instrumentation.ts ./instrumentation.ts
+COPY --chown=medusa:medusa tsconfig.json ./tsconfig.json
 
-# Set user
+# Switch to non-root user
 USER medusa
 
-# Expose port (Medusa default is 9000)
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=9000
+
+# Expose Medusa port
 EXPOSE 9000
 
-# Set environment to production
-ENV NODE_ENV=production
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:9000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Use dumb-init to handle signals
+# Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Run migrations and start the server
-CMD ["sh", "-c", "npx medusa db:migrate && npm run start"]
+# Run database migrations and start server
+CMD ["sh", "-c", "npx medusa db:migrate && npx medusa start"]

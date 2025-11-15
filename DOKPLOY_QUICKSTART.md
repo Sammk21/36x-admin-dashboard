@@ -6,10 +6,19 @@ Your Medusa v2 application is ready for deployment on Dokploy. Just push to GitH
 ## Pre-Deployment Checklist
 
 ✅ **Files Ready:**
-- [Dockerfile](Dockerfile) - Optimized multi-stage build
-- [.dockerignore](.dockerignore) - Excludes unnecessary files
+- [Dockerfile](Dockerfile) - Production-ready 3-stage build (Deps → Builder → Runner)
+- [.dockerignore](.dockerignore) - Optimized build context
 - [dokploy.yaml](dokploy.yaml) - Dokploy configuration
 - [DOKPLOY_DEPLOYMENT.md](DOKPLOY_DEPLOYMENT.md) - Detailed deployment guide
+
+## Key Features of This Setup
+
+✅ **3-Stage Docker Build**: Deps → Builder → Runner for optimal caching
+✅ **Node 22 LTS**: Latest stable version with security patches
+✅ **Debian-based**: Avoids Alpine/musl compatibility issues
+✅ **Health Checks**: Built-in container health monitoring
+✅ **Security**: Non-root user, minimal dependencies, dumb-init
+✅ **Auto-migrations**: Database migrations run automatically on startup
 
 ## Quick Deploy Steps
 
