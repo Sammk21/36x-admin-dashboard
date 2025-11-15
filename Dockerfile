@@ -16,8 +16,8 @@ COPY package*.json ./
 COPY yarn.lock ./
 COPY .yarnrc.yml ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (including devDependencies for build)
+RUN npm ci --legacy-peer-deps
 
 # Copy source files
 COPY . .
@@ -46,7 +46,7 @@ COPY package*.json ./
 COPY yarn.lock ./
 
 # Install production dependencies only
-RUN npm ci --only=production && \
+RUN npm ci --omit=dev --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy built application from builder
