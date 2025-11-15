@@ -22,8 +22,8 @@ RUN npm ci --legacy-peer-deps
 # Copy source files
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application (generates .medusa directory)
+RUN npx medusa build
 
 # Stage 2: Production stage
 # Using Node 22 LTS (latest) for better security patches
