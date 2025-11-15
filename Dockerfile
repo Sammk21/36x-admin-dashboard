@@ -19,6 +19,10 @@ COPY .yarnrc.yml ./
 # Install dependencies (including devDependencies for build)
 RUN npm ci --legacy-peer-deps
 
+# Workaround for rollup optional dependency issue on Alpine
+# See: https://github.com/npm/cli/issues/4828
+RUN npm install --force @rollup/rollup-linux-x64-musl || true
+
 # Copy source files
 COPY . .
 
