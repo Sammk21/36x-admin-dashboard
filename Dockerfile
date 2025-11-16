@@ -16,8 +16,10 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci --only=production && \
+# Install production dependencies
+# Remove package-lock.json first to avoid npm optional dependency bug
+RUN rm -f package-lock.json && \
+    npm install --omit=dev && \
     npm cache clean --force
 
 # ==========================================
