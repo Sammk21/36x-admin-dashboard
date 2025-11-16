@@ -24,10 +24,12 @@
   },
   "dependencies": {
     "@medusajs/admin-sdk": "^2.11.3",
+    "@medusajs/caching-redis": "^2.11.3",
     "@medusajs/cli": "^2.11.3",
     "@medusajs/framework": "^2.11.3",
     "@medusajs/medusa": "^2.11.3",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "ioredis": "^5.4.1"
   },
   "devDependencies": {
     "@medusajs/test-utils": "^2.11.3",

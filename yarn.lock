@@ -1685,7 +1685,7 @@
   dependencies:
     ioredis "^5.4.1"
 
-"@medusajs/caching-redis@2.11.3":
+"@medusajs/caching-redis@^2.11.3", "@medusajs/caching-redis@2.11.3":
   version "2.11.3"
   resolved "https://registry.npmjs.org/@medusajs/caching-redis/-/caching-redis-2.11.3.tgz"
   integrity sha512-+GvU7+WxuLjwnb0YTGEUSsljtH1eakUIUNrY8K3X9Pt8nFWu9dAH2EU3QE09C/3OtyxEbECE8ReoCbiLgXVSfQ==
