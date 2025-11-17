@@ -1,14 +1,8 @@
 # ==========================================
-# Multi-Stage Dockerfile for Medusa v2
-# Optimized for Dokploy Deployment
-# ==========================================
-
-# ==========================================
-# Stage 1: Dependencies
+# Stage 1: Dependencies (Production deps)
 # ==========================================
 FROM node:20-alpine AS deps
 
-# Install build dependencies
 RUN apk add --no-cache libc6-compat python3 make g++
 
 WORKDIR /app
@@ -16,18 +10,16 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install production dependencies
-# Remove package-lock.json first to avoid npm optional dependency bug
+# Install ONLY production dependencies
 RUN rm -f package-lock.json && \
     npm install --omit=dev && \
     npm cache clean --force
 
 # ==========================================
-# Stage 2: Builder
+# Stage 2: Builder (Build with dev deps)
 # ==========================================
 FROM node:20-alpine AS builder
 
-# Install build dependencies
 RUN apk add --no-cache libc6-compat python3 make g++
 
 WORKDIR /app
@@ -35,8 +27,7 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install ALL dependencies (including devDependencies for build)
-# Remove package-lock.json first to avoid npm optional dependency bug
+# Install all deps for building (dev + prod)
 RUN rm -f package-lock.json && \
     npm install && \
     npm cache clean --force
@@ -44,46 +35,39 @@ RUN rm -f package-lock.json && \
 # Copy source code
 COPY . .
 
-# Build the Medusa application
+# Build Medusa v2
 RUN npx medusa build
 
 # ==========================================
-# Stage 3: Runner (Production)
+# Stage 3: Runner (Final Production Image)
 # ==========================================
 FROM node:20-alpine AS runner
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    curl \
+RUN apk add --no-cache curl \
     && addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 medusa
 
 WORKDIR /app
 
-# Set production environment
 ENV NODE_ENV=production
 ENV PORT=9000
 
-# Copy built application from builder
+# Copy built Medusa output
 COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
 COPY --from=builder --chown=medusa:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./medusa-config.ts
 
-# Copy production dependencies from deps stage
+# Copy production-only node_modules
 COPY --from=deps --chown=medusa:nodejs /app/node_modules ./node_modules
 
-# Switch to medusa user
 USER medusa
 
-# Expose port
-EXPOSE 9000
-
-# Health check
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:9000/health || exit 1
 
-# Change to the built server directory and install dependencies
+# Use Medusa built server
 WORKDIR /app/.medusa/server
 
-# Start command (will run migrations and start server)
-CMD ["sh", "-c", "npm install && npm run predeploy && npm run start"]
+# Final run command (no predeploy here)
+CMD ["npm", "run", "start"]
