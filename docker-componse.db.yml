@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: medusa-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: medusa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-medusa_secure_password_here}
+      POSTGRES_DB: medusa
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+      # Performance tuning
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_MAX_CONNECTIONS: 200
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups  # For manual backups
+    ports:
+      - "5432:5432"  # Expose for external access (optional)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medusa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medusa-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: medusa-redis
+    restart: always
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-
