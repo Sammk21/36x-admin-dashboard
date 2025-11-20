@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "seed": "medusa exec ./src/scripts/seed.ts",
+    "seed:india": "medusa exec ./src/scripts/seed-india.ts",
     "start": "medusa start",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
@@ -27,13 +28,14 @@
     "db:seed": "medusa db:seed"
   },
   "dependencies": {
+    "@medusajs/admin-bundler": "^2.11.3",
     "@medusajs/admin-sdk": "^2.11.3",
     "@medusajs/caching-redis": "^2.11.3",
     "@medusajs/cli": "^2.11.3",
     "@medusajs/framework": "^2.11.3",
     "@medusajs/medusa": "^2.11.3",
-    "razorpay": "^2.9.6",
-    "ioredis": "^5.4.1"
+    "ioredis": "^5.4.1",
+    "razorpay": "^2.9.6"
   },
   "devDependencies": {
     "@medusajs/test-utils": "^2.11.3",
